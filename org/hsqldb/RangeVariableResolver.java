@@ -627,7 +627,7 @@ public class RangeVariableResolver {
 
         reorderRanges(starts, joins);
     }
-
+   
     void reorderRanges(HsqlArrayList starts, HsqlArrayList joins) {
 
         if (starts.size() == 0) {
@@ -695,9 +695,9 @@ public class RangeVariableResolver {
             }
         }
 
-        if (position < 0) {
-            return;
-        }
+        //if (position < 0) {
+        //    return;
+        //}
 
         if (position == 0 && firstLeftJoinIndex == 2) {
             return;
@@ -707,10 +707,78 @@ public class RangeVariableResolver {
 
         ArrayUtil.copyArray(rangeVariables, newRanges, rangeVariables.length);
 
-        range               = newRanges[position];
-        newRanges[position] = newRanges[0];
-        newRanges[0]        = range;
-        position            = 1;
+        if (position > 0) {
+	        range               = newRanges[position];
+	        newRanges[position] = newRanges[0];
+	        newRanges[0]        = range;
+	        position            = 1;
+        }
+        
+        
+        /* Index Reorder */
+        for (int i = 0; i < joins.size(); i++) {
+            Expression e = (Expression) joins.get(i);
+
+            if (e == null) {
+                continue;
+            }
+
+            Table leftTable = e.getLeftNode().getRangeVariable().getTable();
+            int leftRangeIndex = -1;
+            int leftBestIndex = leftTable.bestIndexForColumn[e.getLeftNode().columnIndex];
+            
+            Table rightTable = e.getRightNode().getRangeVariable().getTable();
+            int rightRangeIndex = -1;
+            int rightBestIndex = rightTable.bestIndexForColumn[e.getRightNode().columnIndex];
+            
+            for (int pos=0; pos < firstLeftJoinIndex; pos ++ ) { 
+            	if ( newRanges[pos] == e.getLeftNode().getRangeVariable() ) {
+            		leftRangeIndex = pos;
+            	}
+            	
+            	if ( newRanges[pos] == e.getRightNode().getRangeVariable() ) {
+            		rightRangeIndex = pos;
+            	}
+            } 
+            
+            
+            //ensure leftRangeIndex < rightRangeIndex
+            if (leftRangeIndex > rightRangeIndex) {
+            	int te ;
+            	
+            	//swap
+            	te = leftRangeIndex;
+            	leftRangeIndex = rightRangeIndex;
+            	rightRangeIndex = te;
+            	
+            	te = leftBestIndex ;
+            	leftBestIndex = rightBestIndex;
+            	rightBestIndex = te;
+            }
+            
+            if (leftBestIndex != -1 && rightBestIndex == -1) {
+                range           = newRanges[leftRangeIndex];
+                newRanges[leftRangeIndex]    = newRanges[rightRangeIndex];
+                newRanges[rightRangeIndex]    = range;
+                position = 1;
+                
+                continue;
+            }
+           
+            if (leftBestIndex == 0 && rightBestIndex != 0) {
+                range           = newRanges[leftRangeIndex];
+                newRanges[leftRangeIndex]    = newRanges[rightRangeIndex];
+                newRanges[rightRangeIndex]    = range;
+                position = 1;
+                
+                continue;
+            }
+        }
+        /* Index Reorder End */
+        
+        if (position < 0) {
+            return;
+        }
 
         for (; position < firstLeftJoinIndex; position++) {
             boolean found = false;
