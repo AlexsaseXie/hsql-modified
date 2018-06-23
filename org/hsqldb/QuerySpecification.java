@@ -31,6 +31,8 @@
 
 package org.hsqldb;
 
+import java.util.HashMap;
+
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.HsqlNameManager.SimpleName;
 import org.hsqldb.ParserDQL.CompileContext;
@@ -1535,6 +1537,28 @@ public class QuerySpecification extends QueryExpression {
         }
 
         session.sessionContext.rownum = 1;
+        
+        
+        // modified
+        int returnColumnCount = resultMetaData.getColumnCount();
+        int indexStartColumn = isAggregated ? returnColumnCount : 0;
+        HashMap<String, Integer> map;
+        int[] sourcePosition = new int[0];
+        
+        if (isAggregated) {
+        	// calculate data position
+        	map = new HashMap<>();
+        	for (int i = indexStartColumn; i < indexStartAggregates; i++) {
+        		map.put(exprColumns[i].getColumnName(), i);
+        	}
+        	
+        	sourcePosition = new int[returnColumnCount];
+        	for (int i = 0; i < returnColumnCount; i++) {
+        		if (!aggregateCheck[i]) {
+        			sourcePosition[i] = map.get(exprColumns[i].getColumnName());
+        		}
+        	}
+        }
 
         for (int currentIndex = 0; ; ) {
             if (currentIndex < fullJoinIndex) {
@@ -1585,14 +1609,43 @@ public class QuerySpecification extends QueryExpression {
             session.sessionData.startRowProcessing();
 
             Object[] data = new Object[indexLimitData];
-
-            for (int i = 0; i < indexStartAggregates; i++) {
+            
+            
+            
+            for (int i = indexStartColumn; i < indexStartAggregates; i++) {
                 if (isAggregated && aggregateCheck[i]) {
                     continue;
                 } else {
                     data[i] = exprColumns[i].getValue(session);
+                    
                 }
             }
+            
+            for (int i = 0; i < indexStartColumn; i++) {
+            	if (isAggregated && aggregateCheck[i]) {
+            		continue;
+            	} else {
+            		data[i] = data[sourcePosition[i]];
+            	}
+            }
+            
+//            if (isAggregated) {
+//            	// find reflection
+//            	
+//            	int returnIndex = 0, fillIndex = returnColumnCount, aggIndex = indexStartAggregates;
+//                
+//                while (returnIndex < returnColumnCount) {
+//                	if (aggregateCheck[returnIndex]) {
+//                		data[returnIndex] = data[aggIndex];
+//                		aggIndex++;
+//                	}
+//                	else {
+//                		data[returnIndex] = data[fillIndex];
+//                		fillIndex++;
+//                	}
+//                	returnIndex++;
+//                }
+//            }
 
             for (int i = indexLimitVisible; i < indexLimitRowId; i++) {
                 if (i == indexLimitVisible) {

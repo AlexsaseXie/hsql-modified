@@ -88,7 +88,7 @@ public class Testdb {
         Statement st = null;
         ResultSet rs = null;
 
-        st = conn.createStatement();         // statement objects can be reused with
+        st = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);         // statement objects can be reused with
 
         // repeated calls to execute but we
         // choose to make a new one each time
@@ -110,7 +110,7 @@ public class Testdb {
 
         Statement st = null;
 
-        st = conn.createStatement();    // statements
+        st = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);    // statements
 
         int i = st.executeUpdate(expression);    // run the query
 
@@ -135,21 +135,27 @@ public class Testdb {
         // assume we are pointing to BEFORE the first row
         // rs.next() points to next row and returns true
         // or false if there is no next row, which breaks the loop
-        for (; rs.next(); ) {
-            for (i = 0; i < colmax; ++i) {
-                o = rs.getObject(i + 1);    // Is SQL the first column is indexed
-
-                // with 1 not 0
-                try {
-                	System.out.print(o.toString() + " ");
-                } catch (Exception e) {
-                	if (o==null)
-                		System.out.print("null" + " ");
-                }
-            }
-
-            System.out.println(" ");
-        }
+        
+        
+//        for (; rs.next(); ) {
+//            for (i = 0; i < colmax; ++i) {
+//                o = rs.getObject(i + 1);    // Is SQL the first column is indexed
+//
+//                // with 1 not 0
+//                try {
+//                	System.out.print(o.toString() + " ");
+//                } catch (Exception e) {
+//                	if (o==null)
+//                		System.out.print("null" + " ");
+//                }
+//            }
+//
+//            System.out.println(" ");
+//        }
+        
+        rs.last();
+        System.out.println(rs.getRow());
+        rs.beforeFirst();
     }                                       //void dump( ResultSet rs )
 
     public static void main(String[] args) {
@@ -171,6 +177,7 @@ public class Testdb {
         } catch (SQLException ex2){
         	
         }*/
+        System.out.println("start");
         
         String s = "select\n" + 
         		"	c_custkey,\n" + 
@@ -182,8 +189,8 @@ public class Testdb {
         		"	c_phone,\n" + 
         		"	c_comment\n" + 
         		"from\n" + 
-        		"	orders,\n" + 
         		"	customer,\n" + 
+        		"	orders,\n" + 
         		"	lineitem,\n" + 
         		"	nation\n" + 
         		"where\n" + 
@@ -215,7 +222,7 @@ public class Testdb {
 	        } catch (SQLException ex2) {
 	
 	            //ignore
-	            //ex2.printStackTrace();  // second time we run program
+	            ex2.printStackTrace();  // second time we run program
 	            //  should throw execption since table
 	            // already there
 	            //

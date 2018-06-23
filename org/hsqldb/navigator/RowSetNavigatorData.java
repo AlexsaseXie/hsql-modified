@@ -33,6 +33,8 @@ package org.hsqldb.navigator;
 
 import java.util.Comparator;
 import java.util.TreeMap;
+import java.util.HashMap;
+import java.util.Date;
 
 import org.hsqldb.QueryExpression;
 import org.hsqldb.QuerySpecification;
@@ -82,6 +84,7 @@ implements Comparator {
 
     //
     TreeMap        rowMap;
+    HashMap        rowHashMap;
     LongKeyHashMap idMap;
 
     RowSetNavigatorData(Session session) {
@@ -101,6 +104,7 @@ implements Comparator {
         if (select.isGrouped) {
             mainIndex = select.groupIndex;
             rowMap    = new TreeMap(this);
+            rowHashMap = new HashMap();
         }
 
         if (select.idIndex != null) {
@@ -142,7 +146,10 @@ implements Comparator {
         if (orderIndex != null) {
             mainIndex = orderIndex;
 
+            long start_time = new Date().getTime();
             ArraySort.sort(dataTable, 0, size, this);
+            long end_time = new Date().getTime();
+            System.out.println("Order by Cost " + (end_time - start_time)/1000.0 + " s.");
         }
 
         reset();
@@ -168,6 +175,10 @@ implements Comparator {
 
         if (rowMap != null) {
             rowMap.put(data, data);
+        }
+        
+        if (rowHashMap != null) {
+        	rowHashMap.put(data, data);
         }
 
         if (idMap != null) {
