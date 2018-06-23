@@ -756,7 +756,7 @@ public class RangeVariableResolver {
             	rightBestIndex = te;
             }
             
-            if (leftBestIndex != -1 && rightBestIndex == -1) {
+            if (leftBestIndex != -1 && rightBestIndex == -1 && (position == -1 || leftBestIndex > 0)) {
                 range           = newRanges[leftRangeIndex];
                 newRanges[leftRangeIndex]    = newRanges[rightRangeIndex];
                 newRanges[rightRangeIndex]    = range;
@@ -765,7 +765,7 @@ public class RangeVariableResolver {
                 continue;
             }
            
-            if (leftBestIndex == 0 && rightBestIndex != 0) {
+            if (leftBestIndex == 0 && rightBestIndex != 0 && (position == -1 || leftBestIndex > 0)) {
                 range           = newRanges[leftRangeIndex];
                 newRanges[leftRangeIndex]    = newRanges[rightRangeIndex];
                 newRanges[rightRangeIndex]    = range;
